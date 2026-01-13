@@ -1,17 +1,19 @@
+import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { getCarById } from "../data/cars";
 import "./CarDetails.css";
+import BookingForm from "../components/BookingForm";
 
 export default function CarDetails() {
- const { id } = useParams();
-const car = getCarById(id);
-
+  const { id } = useParams();
+  const car = getCarById(id);
+  const [showForm, setShowForm] = useState(false);
 
   if (!car) {
     return (
       <div style={{ padding: 20 }}>
         <h2>Voiture introuvable.</h2>
-        <Link to="/cars">← Retour aux véhicules</Link>
+        <Link to="/">← Retour aux véhicules</Link>
       </div>
     );
   }
@@ -70,9 +72,17 @@ const car = getCarById(id);
           À partir de {car.pricePerDay}€ <span>/ jour</span>
         </div>
 
-        <button className="car-details-button">
+        <button
+          className="car-details-button"
+          onClick={() => setShowForm(true)}
+        >
           Réserver
         </button>
+
+        {/* FORMULAIRE */}
+        {showForm && (
+          <BookingForm car={car} onClose={() => setShowForm(false)} />
+        )}
       </div>
     </div>
   );
