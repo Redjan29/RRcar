@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { getCarById } from "../data/cars";
 import BookingForm from "../components/BookingForm";
+import Navbar from "../components/Navbar";
 import "./CarDetails.css";
 
 export default function CarDetails() {
@@ -27,6 +28,8 @@ export default function CarDetails() {
   }
 
   return (
+     <>
+      <Navbar />
     <div className="car-details-page">
       <div className="car-details-container">
         {/* LEFT */}
@@ -90,5 +93,6 @@ export default function CarDetails() {
         </div>
       )}
     </div>
+    </>
   );
 }

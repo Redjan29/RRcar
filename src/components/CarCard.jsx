@@ -3,6 +3,7 @@ import './CarCard.css';
 import { Link } from 'react-router-dom';
 
 function CarCard({
+  id,
   brand,
   model,
   category,
@@ -24,7 +25,7 @@ function CarCard({
             <span className="car-card-price-unit"> / jour</span>
           </div>
         </div>
-       <Link to={`/cars/${brand.toLowerCase()}-${model.toLowerCase().replace(/\s+/g, '-')}`}>
+       <Link to={`/cars/${id}`}>
   <button className="car-card-button">Réserver</button>
 </Link>
 
