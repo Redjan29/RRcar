@@ -17,11 +17,17 @@
   gap: 12px;
 }
 
-.navbar-logo {
-  font-weight: 700;
-  font-size: 20px;
-  text-decoration: none;
-  color: #111827;
+.navbar-logo-link {
+  display: inline-flex;
+  align-items: center;
+}
+
+.navbar-logo-img {
+  height: 40px;
+  max-height: 40px;
+  width: auto;
+  object-fit: contain;
+  display: block;
 }
 
 .navbar-right {

@@ -1,6 +1,7 @@
 // src/components/CarCard.jsx
-import './CarCard.css';
-import { Link } from 'react-router-dom';
+import "./CarCard.css";
+import { Link } from "react-router-dom";
+import { useAppContext } from "../context/AppContext.jsx";
 
 function CarCard({
   id,
@@ -14,27 +15,40 @@ function CarCard({
   transmission,
   fuel,
 }) {
+  const { formatPrice, language } = useAppContext();
+
+  const priceLabel =
+    language === "fr" ? "À partir de *" : "Starting from *";
+  const perDayLabel =
+    language === "fr" ? " / jour" : " / day";
+
   return (
     <div className="car-card">
       {/* Header prix + bouton */}
       <div className="car-card-header">
         <div className="car-card-price">
-          <span className="car-card-price-label">À partir de *</span>
+          <span className="car-card-price-label">{priceLabel}</span>
           <div>
-            <span className="car-card-price-value">{pricePerDay}€</span>
-            <span className="car-card-price-unit"> / jour</span>
+            <span className="car-card-price-value">
+              {formatPrice(pricePerDay)}
+            </span>
+            <span className="car-card-price-unit">{perDayLabel}</span>
           </div>
         </div>
-       <Link to={`/cars/${id}`}>
-  <button className="car-card-button">Réserver</button>
-</Link>
-
+        <Link to={`/cars/${id}`}>
+          <button className="car-card-button">
+            {language === "fr" ? "Réserver" : "Book"}
+          </button>
+        </Link>
       </div>
 
       {/* Image voiture */}
       <div className="car-card-image-wrapper">
-       <img className="car-card-image" src={imageUrl} alt={`${brand} ${model}`} />
-
+        <img
+          className="car-card-image"
+          src={imageUrl}
+          alt={`${brand} ${model}`}
+        />
       </div>
 
       {/* Infos voiture */}
@@ -48,22 +62,30 @@ function CarCard({
       <div className="car-card-features">
         <div className="car-card-feature">
           <div className="car-card-feature-icon">👥</div>
-          <span className="car-card-feature-label">Places</span>
+          <span className="car-card-feature-label">
+            {language === "fr" ? "Places" : "Seats"}
+          </span>
           <span className="car-card-feature-value">{seats}</span>
         </div>
         <div className="car-card-feature">
           <div className="car-card-feature-icon">🧳</div>
-          <span className="car-card-feature-label">Bagages</span>
+          <span className="car-card-feature-label">
+            {language === "fr" ? "Bagages" : "Luggage"}
+          </span>
           <span className="car-card-feature-value">{luggage}</span>
         </div>
         <div className="car-card-feature">
           <div className="car-card-feature-icon">⚙️</div>
-          <span className="car-card-feature-label">Boîte</span>
+          <span className="car-card-feature-label">
+            {language === "fr" ? "Boîte" : "Gearbox"}
+          </span>
           <span className="car-card-feature-value">{transmission}</span>
         </div>
         <div className="car-card-feature">
           <div className="car-card-feature-icon">⛽</div>
-          <span className="car-card-feature-label">Carburant</span>
+          <span className="car-card-feature-label">
+            {language === "fr" ? "Carburant" : "Fuel"}
+          </span>
           <span className="car-card-feature-value">{fuel}</span>
         </div>
       </div>
