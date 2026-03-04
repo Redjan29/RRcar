@@ -11,7 +11,11 @@ const userSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: true,
+      required: false,
+    },
+    hasPassword: {
+      type: Boolean,
+      default: false,
     },
     firstName: {
       type: String,
@@ -42,6 +46,10 @@ const userSchema = new mongoose.Schema(
     isActive: {
       type: Boolean,
       default: true,
+    },
+    isAdmin: {
+      type: Boolean,
+      default: false,
     },
     reservations: [
       {

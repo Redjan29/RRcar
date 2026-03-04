@@ -7,6 +7,7 @@ import healthRoutes from "./src/routes/health.js";
 import authRoutes from "./src/routes/auth.js";
 import carsRoutes from "./src/routes/cars.js";
 import reservationsRoutes from "./src/routes/reservations.js";
+import adminRoutes from "./src/routes/admin.js";
 
 dotenv.config();
 const app = express();
@@ -20,6 +21,7 @@ app.use("/", healthRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/cars", carsRoutes);
 app.use("/api/reservations", reservationsRoutes);
+app.use("/api/admin", adminRoutes);
 
 // Error handling middleware
 app.use(errorHandler);

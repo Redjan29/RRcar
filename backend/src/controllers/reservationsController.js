@@ -66,6 +66,14 @@ export async function createReservation(req, res, next) {
     const end = parseDate(endDate, "endDate");
     const numberOfDays = calculateDays(start, end);
 
+    // Validation de la date d'expiration du permis
+    const licenseExpiryDate = parseDate(user.licenseExpiry, "licenseExpiry");
+    if (licenseExpiryDate < end) {
+      const err = new Error("Driver's license expires before the end of the rental period");
+      err.status = 400;
+      throw err;
+    }
+
     const car = await Car.findById(carId);
     if (!car) {
       const err = new Error("Car not found");
@@ -90,13 +98,13 @@ export async function createReservation(req, res, next) {
     if (!existingUser) {
       existingUser = await User.create({
         email: user.email,
-        password: "temporary",
         firstName: user.firstName,
         lastName: user.lastName,
         phone: user.phone,
         address: user.address,
         licenseNumber: user.licenseNumber,
         licenseExpiry: user.licenseExpiry,
+        hasPassword: false,
       });
     }
 
@@ -201,6 +209,74 @@ export async function deleteReservation(req, res, next) {
     await User.findByIdAndUpdate(reservation.user, { $pull: { reservations: reservation._id } });
 
     res.json({ data: { deleted: true } });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getMyReservations(req, res, next) {
+  try {
+    const userId = req.user?.userId;
+
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      const err = new Error("Invalid user");
+      err.status = 401;
+      throw err;
+    }
+
+    const reservations = await Reservation.find({ user: userId })
+      .sort({ createdAt: -1 })
+      .populate("car", "brand model category imageUrl licensePlate pricePerDay");
+
+    res.json({ data: reservations });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function cancelMyReservation(req, res, next) {
+  try {
+    const userId = req.user?.userId;
+    const { id } = req.params;
+
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      const err = new Error("Invalid user");
+      err.status = 401;
+      throw err;
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      const err = new Error("Invalid reservation id");
+      err.status = 400;
+      throw err;
+    }
+
+    const reservation = await Reservation.findOne({ _id: id, user: userId });
+    if (!reservation) {
+      const err = new Error("Reservation not found");
+      err.status = 404;
+      throw err;
+    }
+
+    if (reservation.status !== "PENDING") {
+      const err = new Error("Only pending reservations can be cancelled");
+      err.status = 400;
+      throw err;
+    }
+
+    reservation.status = "CANCELLED";
+    await reservation.save();
+
+    if (reservation.car) {
+      await Car.findByIdAndUpdate(reservation.car, { status: "DISPONIBLE" });
+    }
+
+    const updatedReservation = await Reservation.findById(reservation._id).populate(
+      "car",
+      "brand model category imageUrl licensePlate pricePerDay"
+    );
+
+    res.json({ data: updatedReservation });
   } catch (error) {
     next(error);
   }

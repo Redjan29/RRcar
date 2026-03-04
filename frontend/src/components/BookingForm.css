@@ -19,6 +19,16 @@
   font-size: 18px;
 }
 
+/* Info utilisateur connecté */
+.booking-user-info {
+  margin-bottom: 16px;
+  padding: 12px;
+  background: #eff6ff;
+  border-radius: 8px;
+  color: #1e40af;
+  font-size: 14px;
+}
+
 /* grille des champs */
 .booking-form {
   display: flex;
@@ -106,4 +116,37 @@
   .booking-form-container {
     padding: 16px;
   }
+}
+
+/* Account creation modal */
+.account-modal {
+  text-align: center;
+}
+
+.account-modal h3 {
+  color: #059669;
+  margin-bottom: 12px;
+}
+
+.account-modal p {
+  margin-bottom: 12px;
+  color: #4b5563;
+}
+
+.modal-question {
+  font-weight: 600;
+  color: #111827;
+  margin-top: 20px;
+  font-size: 15px;
+}
+
+.account-form {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.account-form .booking-form-group {
+  text-align: left;
 }

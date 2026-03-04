@@ -44,11 +44,42 @@
   font-size: 14px;
 }
 
+.navbar-user {
+  font-size: 14px;
+  color: #374151;
+  font-weight: 500;
+}
+
 .navbar-link {
   font-size: 14px;
   text-decoration: none;
   color: #111827;
   padding: 6px 10px;
+  cursor: pointer;
+}
+
+.navbar-link:hover {
+  text-decoration: underline;
+}
+
+.navbar-admin-link {
+  font-size: 14px;
+  text-decoration: none;
+  color: #dc2626;
+  padding: 6px 12px;
+  font-weight: 600;
+  background: #fee2e2;
+  border-radius: 6px;
+}
+
+.navbar-admin-link:hover {
+  background: #fecaca;
+}
+
+.navbar-logout {
+  background: none;
+  border: none;
+  font-family: inherit;
 }
 
 .navbar-button {
@@ -59,4 +90,9 @@
   color: #ffffff;
   font-size: 14px;
   text-decoration: none;
+  cursor: pointer;
+}
+
+.navbar-button:hover {
+  background: #374151;
 }
