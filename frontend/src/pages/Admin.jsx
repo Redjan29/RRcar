@@ -6,7 +6,9 @@ import {
   getDashboardStats,
   getAllReservations,
   getAllUsers,
+  getAllCars,
   updateReservationStatus,
+  updateCar,
   updateUser,
 } from "../api/admin";
 import "./Admin.css";
@@ -19,6 +21,7 @@ export default function Admin() {
   const [stats, setStats] = useState(null);
   const [reservations, setReservations] = useState([]);
   const [users, setUsers] = useState([]);
+  const [cars, setCars] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -50,6 +53,9 @@ export default function Admin() {
       } else if (activeTab === "users") {
         const response = await getAllUsers(token);
         setUsers(response);
+      } else if (activeTab === "cars") {
+        const response = await getAllCars(token);
+        setCars(response);
       }
     } catch (err) {
       setError(err.message || "Erreur lors du chargement des données");
@@ -73,6 +79,15 @@ export default function Admin() {
       loadData();
     } catch (err) {
       alert(err.message || "Erreur lors de la mise à jour");
+    }
+  }
+
+  async function handleUpdateCar(carId, updates) {
+    try {
+      await updateCar(token, carId, updates);
+      loadData();
+    } catch (err) {
+      alert(err.message || "Erreur lors de la mise à jour de la voiture");
     }
   }
 
@@ -106,6 +121,12 @@ export default function Admin() {
           >
             👥 Utilisateurs
           </button>
+          <button
+            className={activeTab === "cars" ? "active" : ""}
+            onClick={() => setActiveTab("cars")}
+          >
+            🚗 Voitures
+          </button>
         </div>
 
         {error && <div className="admin-error">{error}</div>}
@@ -132,6 +153,10 @@ export default function Admin() {
                   users={users}
                   onToggleActive={handleToggleUserActive}
                 />
+              )}
+
+              {activeTab === "cars" && (
+                <CarsView cars={cars} onUpdateCar={handleUpdateCar} />
               )}
             </>
           )}
@@ -413,6 +438,227 @@ function UsersView({ users = [], onToggleActive }) {
         </tbody>
       </table>
       )}
+    </div>
+  );
+}
+
+function CarsView({ cars = [], onUpdateCar }) {
+  const [editingCarId, setEditingCarId] = useState(null);
+  const [formData, setFormData] = useState({
+    pricePerDay: "",
+    description: "",
+    status: "DISPONIBLE",
+    seats: "",
+    luggage: "",
+    transmission: "Manuel",
+    fuel: "Essence",
+    imageUrl: "",
+  });
+
+  const handleStartEdit = (car) => {
+    setEditingCarId(car._id);
+    setFormData({
+      pricePerDay: String(car.pricePerDay ?? ""),
+      description: car.description ?? "",
+      status: car.status ?? "DISPONIBLE",
+      seats: String(car.seats ?? ""),
+      luggage: String(car.luggage ?? ""),
+      transmission: car.transmission ?? "Manuel",
+      fuel: car.fuel ?? "Essence",
+      imageUrl: car.imageUrl ?? "",
+    });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingCarId(null);
+  };
+
+  const handleSave = async () => {
+    if (!editingCarId) {
+      return;
+    }
+
+    await onUpdateCar(editingCarId, {
+      pricePerDay: Number(formData.pricePerDay),
+      description: formData.description,
+      status: formData.status,
+      seats: Number(formData.seats),
+      luggage: Number(formData.luggage),
+      transmission: formData.transmission,
+      fuel: formData.fuel,
+      imageUrl: formData.imageUrl,
+    });
+
+    setEditingCarId(null);
+  };
+
+  if (cars.length === 0) {
+    return (
+      <div className="empty-state">
+        <p>🚗 Aucune voiture trouvée</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="cars-view">
+      <table className="admin-table">
+        <thead>
+          <tr>
+            <th>Voiture</th>
+            <th>Plaque</th>
+            <th>Prix/jour</th>
+            <th>Statut</th>
+            <th>Description</th>
+            <th>Specs</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {cars.map((car) => {
+            const isEditing = editingCarId === car._id;
+
+            return (
+              <tr key={car._id}>
+                <td>
+                  <strong>{car.brand} {car.model}</strong>
+                  <br />
+                  <small>{car.category}</small>
+                </td>
+                <td>{car.licensePlate}</td>
+                <td>
+                  {isEditing ? (
+                    <input
+                      className="admin-input"
+                      type="number"
+                      min="1"
+                      value={formData.pricePerDay}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, pricePerDay: e.target.value }))
+                      }
+                    />
+                  ) : (
+                    `${car.pricePerDay}€`
+                  )}
+                </td>
+                <td>
+                  {isEditing ? (
+                    <select
+                      className="admin-select"
+                      value={formData.status}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, status: e.target.value }))
+                      }
+                    >
+                      <option value="DISPONIBLE">DISPONIBLE</option>
+                      <option value="RESERVATION">RESERVATION</option>
+                      <option value="MAINTENANCE">MAINTENANCE</option>
+                      <option value="INDISPONIBLE">INDISPONIBLE</option>
+                    </select>
+                  ) : (
+                    <span className={`status-badge ${String(car.status).toLowerCase()}`}>
+                      {car.status}
+                    </span>
+                  )}
+                </td>
+                <td>
+                  {isEditing ? (
+                    <textarea
+                      className="admin-textarea"
+                      rows={3}
+                      value={formData.description}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, description: e.target.value }))
+                      }
+                    />
+                  ) : (
+                    <span>{car.description || "-"}</span>
+                  )}
+                </td>
+                <td>
+                  {isEditing ? (
+                    <div className="car-edit-grid">
+                      <input
+                        className="admin-input"
+                        type="number"
+                        min="1"
+                        placeholder="Places"
+                        value={formData.seats}
+                        onChange={(e) =>
+                          setFormData((prev) => ({ ...prev, seats: e.target.value }))
+                        }
+                      />
+                      <input
+                        className="admin-input"
+                        type="number"
+                        min="0"
+                        placeholder="Bagages"
+                        value={formData.luggage}
+                        onChange={(e) =>
+                          setFormData((prev) => ({ ...prev, luggage: e.target.value }))
+                        }
+                      />
+                      <select
+                        className="admin-select"
+                        value={formData.transmission}
+                        onChange={(e) =>
+                          setFormData((prev) => ({ ...prev, transmission: e.target.value }))
+                        }
+                      >
+                        <option value="Manuel">Manuel</option>
+                        <option value="Auto">Auto</option>
+                      </select>
+                      <select
+                        className="admin-select"
+                        value={formData.fuel}
+                        onChange={(e) =>
+                          setFormData((prev) => ({ ...prev, fuel: e.target.value }))
+                        }
+                      >
+                        <option value="Essence">Essence</option>
+                        <option value="Diesel">Diesel</option>
+                        <option value="Électrique">Électrique</option>
+                        <option value="Hybride">Hybride</option>
+                      </select>
+                      <input
+                        className="admin-input"
+                        type="text"
+                        placeholder="Image URL"
+                        value={formData.imageUrl}
+                        onChange={(e) =>
+                          setFormData((prev) => ({ ...prev, imageUrl: e.target.value }))
+                        }
+                      />
+                    </div>
+                  ) : (
+                    <>
+                      <small>{car.seats} places · {car.luggage} bagages</small>
+                      <br />
+                      <small>{car.transmission} · {car.fuel}</small>
+                    </>
+                  )}
+                </td>
+                <td className="actions-cell">
+                  {isEditing ? (
+                    <>
+                      <button className="btn-approve" onClick={handleSave}>
+                        Sauvegarder
+                      </button>
+                      <button className="btn-deactivate" onClick={handleCancelEdit}>
+                        Annuler
+                      </button>
+                    </>
+                  ) : (
+                    <button className="btn-active" onClick={() => handleStartEdit(car)}>
+                      Modifier
+                    </button>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
     </div>
   );
 }

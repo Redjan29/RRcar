@@ -56,6 +56,11 @@ export default function Navbar() {
               {language === "fr" ? "Bonjour" : "Hello"},{" "}
               {user?.firstName || "User"}
             </span>
+            {!isAdminPage && (
+              <Link to="/my-reservations" className="navbar-link">
+                {language === "fr" ? "Mes réservations" : "My reservations"}
+              </Link>
+            )}
             {user?.isAdmin && !isAdminPage && (
               <Link to="/admin" className="navbar-admin-link">
                 🔧 Admin

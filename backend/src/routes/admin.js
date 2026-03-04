@@ -5,7 +5,9 @@ import {
   updateReservationStatus,
   getAllUsers,
   getDashboardStats,
-  updateUser
+  updateUser,
+  getAllCars,
+  updateCar,
 } from "../controllers/adminController.js";
 
 const router = express.Router();
@@ -23,5 +25,9 @@ router.patch("/reservations/:id/status", updateReservationStatus);
 // Gestion des utilisateurs
 router.get("/users", getAllUsers);
 router.patch("/users/:id", updateUser);
+
+// Gestion des voitures
+router.get("/cars", getAllCars);
+router.patch("/cars/:id", updateCar);
 
 export default router;

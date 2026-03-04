@@ -50,3 +50,23 @@ export function updateUser(token, userId, updates) {
     },
   });
 }
+
+// Lister toutes les voitures (admin)
+export function getAllCars(token) {
+  return apiFetch("/api/admin/cars", {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
+
+// Mettre à jour une voiture (admin)
+export function updateCar(token, carId, updates) {
+  return apiFetch(`/api/admin/cars/${carId}`, {
+    method: "PATCH",
+    body: JSON.stringify(updates),
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}

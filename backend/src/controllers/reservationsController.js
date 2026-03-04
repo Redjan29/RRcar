@@ -213,3 +213,71 @@ export async function deleteReservation(req, res, next) {
     next(error);
   }
 }
+
+export async function getMyReservations(req, res, next) {
+  try {
+    const userId = req.user?.userId;
+
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      const err = new Error("Invalid user");
+      err.status = 401;
+      throw err;
+    }
+
+    const reservations = await Reservation.find({ user: userId })
+      .sort({ createdAt: -1 })
+      .populate("car", "brand model category imageUrl licensePlate pricePerDay");
+
+    res.json({ data: reservations });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function cancelMyReservation(req, res, next) {
+  try {
+    const userId = req.user?.userId;
+    const { id } = req.params;
+
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      const err = new Error("Invalid user");
+      err.status = 401;
+      throw err;
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      const err = new Error("Invalid reservation id");
+      err.status = 400;
+      throw err;
+    }
+
+    const reservation = await Reservation.findOne({ _id: id, user: userId });
+    if (!reservation) {
+      const err = new Error("Reservation not found");
+      err.status = 404;
+      throw err;
+    }
+
+    if (reservation.status !== "PENDING") {
+      const err = new Error("Only pending reservations can be cancelled");
+      err.status = 400;
+      throw err;
+    }
+
+    reservation.status = "CANCELLED";
+    await reservation.save();
+
+    if (reservation.car) {
+      await Car.findByIdAndUpdate(reservation.car, { status: "DISPONIBLE" });
+    }
+
+    const updatedReservation = await Reservation.findById(reservation._id).populate(
+      "car",
+      "brand model category imageUrl licensePlate pricePerDay"
+    );
+
+    res.json({ data: updatedReservation });
+  } catch (error) {
+    next(error);
+  }
+}

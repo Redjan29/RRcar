@@ -1,18 +1,16 @@
 import { useEffect, useState } from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import CarCard from "./components/CarCard";
 import Navbar from "./components/Navbar";
 import { fetchCars } from "./api/cars";
+import { useAuth } from "./context/AuthContext.jsx";
 
 function App() {
-  const location = useLocation();
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
   const [cars, setCars] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
-  if (location.pathname.startsWith("/admin")) {
-    return <Navigate to="/admin" replace />;
-  }
+  const shouldRedirectAdmin = !authLoading && isAuthenticated && user?.isAdmin;
 
   useEffect(() => {
     let isMounted = true;
@@ -38,6 +36,10 @@ function App() {
       isMounted = false;
     };
   }, []);
+
+  if (shouldRedirectAdmin) {
+    return <Navigate to="/admin" replace />;
+  }
 
   return (
     <>

@@ -168,6 +168,103 @@ export async function getAllUsers(req, res, next) {
   }
 }
 
+// Lister toutes les voitures (admin)
+export async function getAllCars(req, res, next) {
+  try {
+    const cars = await Car.find().sort({ createdAt: -1 });
+    res.json({ data: cars });
+  } catch (error) {
+    next(error);
+  }
+}
+
+// Mettre à jour une voiture (admin)
+export async function updateCar(req, res, next) {
+  try {
+    const { id } = req.params;
+    const updates = { ...req.body };
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      const err = new Error("Invalid car ID");
+      err.status = 400;
+      throw err;
+    }
+
+    const allowedFields = [
+      "pricePerDay",
+      "description",
+      "status",
+      "seats",
+      "luggage",
+      "transmission",
+      "fuel",
+      "imageUrl",
+      "category",
+      "year",
+      "brand",
+      "model",
+      "licensePlate",
+    ];
+
+    for (const key of Object.keys(updates)) {
+      if (!allowedFields.includes(key)) {
+        delete updates[key];
+      }
+    }
+
+    if (updates.pricePerDay !== undefined) {
+      updates.pricePerDay = Number(updates.pricePerDay);
+      if (!Number.isFinite(updates.pricePerDay) || updates.pricePerDay <= 0) {
+        const err = new Error("pricePerDay must be a positive number");
+        err.status = 400;
+        throw err;
+      }
+    }
+
+    if (updates.seats !== undefined) {
+      updates.seats = Number(updates.seats);
+      if (!Number.isInteger(updates.seats) || updates.seats <= 0) {
+        const err = new Error("seats must be a positive integer");
+        err.status = 400;
+        throw err;
+      }
+    }
+
+    if (updates.luggage !== undefined) {
+      updates.luggage = Number(updates.luggage);
+      if (!Number.isInteger(updates.luggage) || updates.luggage < 0) {
+        const err = new Error("luggage must be a non-negative integer");
+        err.status = 400;
+        throw err;
+      }
+    }
+
+    if (updates.year !== undefined) {
+      updates.year = Number(updates.year);
+      if (!Number.isInteger(updates.year) || updates.year < 1990) {
+        const err = new Error("year must be a valid integer");
+        err.status = 400;
+        throw err;
+      }
+    }
+
+    const car = await Car.findByIdAndUpdate(id, updates, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!car) {
+      const err = new Error("Car not found");
+      err.status = 404;
+      throw err;
+    }
+
+    res.json({ data: car });
+  } catch (error) {
+    next(error);
+  }
+}
+
 // Mettre à jour un utilisateur
 export async function updateUser(req, res, next) {
   try {

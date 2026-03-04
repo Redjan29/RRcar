@@ -177,6 +177,26 @@
   color: #991b1b;
 }
 
+.status-badge.disponible {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.status-badge.reservation {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.status-badge.maintenance {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-badge.indisponible {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
 /* User badges */
 .badge-account,
 .badge-guest,
@@ -292,6 +312,28 @@
   border: 1px solid #d1d5db;
   border-radius: 6px;
   font-size: 14px;
+}
+
+.admin-input,
+.admin-select,
+.admin-textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: inherit;
+  background: #fff;
+}
+
+.admin-textarea {
+  resize: vertical;
+}
+
+.car-edit-grid {
+  display: grid;
+  gap: 8px;
+  min-width: 210px;
 }
 
 /* Recent reservations section */

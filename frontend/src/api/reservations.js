@@ -6,3 +6,20 @@ export function createReservation(payload) {
     body: JSON.stringify(payload),
   });
 }
+
+export function getMyReservations(token) {
+  return apiFetch("/api/reservations/my", {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
+
+export function cancelMyReservation(token, reservationId) {
+  return apiFetch(`/api/reservations/my/${reservationId}/cancel`, {
+    method: "PATCH",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
