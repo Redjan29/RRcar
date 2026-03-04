@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import { User } from "../models/index.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
 
@@ -49,5 +50,38 @@ export function optionalAuth(req, res, next) {
   } catch (error) {
     // On ignore les erreurs pour l'auth optionnelle
     next();
+  }
+}
+
+// Middleware admin : vérifie que l'utilisateur est administrateur
+export async function adminMiddleware(req, res, next) {
+  try {
+    if (!req.user || !req.user.userId) {
+      const err = new Error("Authentication required");
+      err.status = 401;
+      throw err;
+    }
+
+    // Récupération de l'utilisateur depuis la DB
+    const user = await User.findById(req.user.userId);
+    
+    if (!user) {
+      const err = new Error("User not found");
+      err.status = 404;
+      throw err;
+    }
+
+    if (!user.isAdmin) {
+      const err = new Error("Admin access required");
+      err.status = 403;
+      throw err;
+    }
+
+    // Ajouter l'objet user complet à la requête
+    req.adminUser = user;
+    
+    next();
+  } catch (error) {
+    next(error);
   }
 }

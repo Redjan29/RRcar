@@ -53,6 +53,11 @@ export default function Navbar() {
               {language === "fr" ? "Bonjour" : "Hello"},{" "}
               {user?.firstName || "User"}
             </span>
+            {user?.isAdmin && (
+              <Link to="/admin" className="navbar-admin-link">
+                🔧 Admin
+              </Link>
+            )}
             <button onClick={handleLogout} className="navbar-link navbar-logout">
               {language === "fr" ? "Déconnexion" : "Logout"}
             </button>

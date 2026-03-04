@@ -66,6 +66,14 @@ export async function createReservation(req, res, next) {
     const end = parseDate(endDate, "endDate");
     const numberOfDays = calculateDays(start, end);
 
+    // Validation de la date d'expiration du permis
+    const licenseExpiryDate = parseDate(user.licenseExpiry, "licenseExpiry");
+    if (licenseExpiryDate < end) {
+      const err = new Error("Driver's license expires before the end of the rental period");
+      err.status = 400;
+      throw err;
+    }
+
     const car = await Car.findById(carId);
     if (!car) {
       const err = new Error("Car not found");

@@ -73,6 +73,7 @@ export async function register(req, res, next) {
       phone: user.phone,
       licenseNumber: user.licenseNumber,
       licenseExpiry: user.licenseExpiry,
+      isAdmin: user.isAdmin || false,
     };
 
     res.status(201).json({
@@ -139,6 +140,7 @@ export async function login(req, res, next) {
       phone: user.phone,
       licenseNumber: user.licenseNumber,
       licenseExpiry: user.licenseExpiry,
+      isAdmin: user.isAdmin || false,
     };
 
     res.json({
@@ -223,6 +225,7 @@ export async function activateAccount(req, res, next) {
       phone: user.phone,
       licenseNumber: user.licenseNumber,
       licenseExpiry: user.licenseExpiry,
+      isAdmin: user.isAdmin || false,
     };
 
     res.json({

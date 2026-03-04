@@ -1,0 +1,318 @@
+.admin-page {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.admin-page h1 {
+  margin-bottom: 24px;
+  font-size: 28px;
+}
+
+/* Tabs */
+.admin-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.admin-tabs button {
+  padding: 12px 24px;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  font-size: 15px;
+  color: #6b7280;
+  transition: all 0.2s;
+}
+
+.admin-tabs button:hover {
+  color: #111827;
+}
+
+.admin-tabs button.active {
+  color: #111827;
+  font-weight: 600;
+  border-bottom-color: #111827;
+}
+
+/* Content */
+.admin-content {
+  margin-top: 24px;
+}
+
+.admin-error {
+  padding: 12px;
+  background: #fee2e2;
+  color: #991b1b;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+/* Dashboard Stats */
+.dashboard-view {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 16px;
+}
+
+.stat-card {
+  padding: 20px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+}
+
+.stat-card h3 {
+  font-size: 14px;
+  color: #6b7280;
+  margin-bottom: 8px;
+}
+
+.stat-number {
+  font-size: 32px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.stat-detail {
+  font-size: 13px;
+  color: #9ca3af;
+  margin-top: 4px;
+}
+
+/* Tables */
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.admin-table thead {
+  background: #f9fafb;
+}
+
+.admin-table th {
+  padding: 12px;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b7280;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.admin-table td {
+  padding: 12px;
+  font-size: 14px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.admin-table tbody tr:hover {
+  background: #f9fafb;
+}
+
+.admin-table small {
+  color: #6b7280;
+  font-size: 12px;
+}
+
+/* Status badges */
+.status-badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.status-badge.pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-badge.confirmed {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.status-badge.active {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.status-badge.completed {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+
+.status-badge.cancelled {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* User badges */
+.badge-account,
+.badge-guest,
+.badge-active,
+.badge-inactive {
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.badge-account {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.badge-guest {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.badge-active {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.badge-inactive {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* Actions */
+.actions-cell {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.actions-cell button {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-approve {
+  background: #10b981;
+  color: white;
+}
+
+.btn-approve:hover {
+  background: #059669;
+}
+
+.btn-reject {
+  background: #ef4444;
+  color: white;
+}
+
+.btn-reject:hover {
+  background: #dc2626;
+}
+
+.btn-active,
+.btn-complete {
+  background: #3b82f6;
+  color: white;
+}
+
+.btn-active:hover,
+.btn-complete:hover {
+  background: #2563eb;
+}
+
+.btn-activate {
+  background: #10b981;
+  color: white;
+}
+
+.btn-activate:hover {
+  background: #059669;
+}
+
+.btn-deactivate {
+  background: #6b7280;
+  color: white;
+}
+
+.btn-deactivate:hover {
+  background: #4b5563;
+}
+
+/* Filter bar */
+.filter-bar {
+  margin-bottom: 16px;
+  padding: 16px;
+  background: #f9fafb;
+  border-radius: 8px;
+}
+
+.filter-bar label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.filter-bar select {
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+/* Recent reservations section */
+.recent-reservations {
+  margin-top: 32px;
+}
+
+.recent-reservations h2 {
+  font-size: 20px;
+  margin-bottom: 16px;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .admin-page {
+    padding: 16px;
+  }
+
+  .admin-tabs {
+    overflow-x: auto;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-table {
+    font-size: 12px;
+  }
+
+  .admin-table th,
+  .admin-table td {
+    padding: 8px;
+  }
+
+  .actions-cell {
+    flex-direction: column;
+  }
+}

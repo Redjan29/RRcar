@@ -62,6 +62,20 @@
   text-decoration: underline;
 }
 
+.navbar-admin-link {
+  font-size: 14px;
+  text-decoration: none;
+  color: #dc2626;
+  padding: 6px 12px;
+  font-weight: 600;
+  background: #fee2e2;
+  border-radius: 6px;
+}
+
+.navbar-admin-link:hover {
+  background: #fecaca;
+}
+
 .navbar-logout {
   background: none;
   border: none;

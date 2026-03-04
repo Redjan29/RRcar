@@ -47,6 +47,10 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    isAdmin: {
+      type: Boolean,
+      default: false,
+    },
     reservations: [
       {
         type: mongoose.Schema.Types.ObjectId,

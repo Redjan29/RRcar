@@ -47,6 +47,33 @@ export default function Signup() {
       return;
     }
 
+    // Validation du numéro de permis
+    const licenseNum = formData.licenseNumber.trim();
+    if (licenseNum.length < 6 || licenseNum.length > 20) {
+      setError(
+        language === "fr"
+          ? "Le numéro de permis doit contenir entre 6 et 20 caractères"
+          : "License number must be between 6 and 20 characters"
+      );
+      setLoading(false);
+      return;
+    }
+
+    // Validation de la date d'expiration du permis
+    const licenseExpiryDate = new Date(formData.licenseExpiry);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (licenseExpiryDate < today) {
+      setError(
+        language === "fr"
+          ? "Votre permis de conduire est expiré"
+          : "Your driver's license is expired"
+      );
+      setLoading(false);
+      return;
+    }
+
     try {
       await register(formData);
       navigate("/");
@@ -123,6 +150,9 @@ export default function Signup() {
                 name="licenseNumber"
                 value={formData.licenseNumber}
                 onChange={handleChange}
+                placeholder={language === "fr" ? "6 à 20 caractères" : "6 to 20 characters"}
+                minLength={6}
+                maxLength={20}
                 required
                 disabled={loading}
               />
@@ -136,6 +166,7 @@ export default function Signup() {
                 name="licenseExpiry"
                 value={formData.licenseExpiry}
                 onChange={handleChange}
+                min={new Date().toISOString().split('T')[0]}
                 required
                 disabled={loading}
               />

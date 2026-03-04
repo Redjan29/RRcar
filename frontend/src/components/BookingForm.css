@@ -19,6 +19,16 @@
   font-size: 18px;
 }
 
+/* Info utilisateur connecté */
+.booking-user-info {
+  margin-bottom: 16px;
+  padding: 12px;
+  background: #eff6ff;
+  border-radius: 8px;
+  color: #1e40af;
+  font-size: 14px;
+}
+
 /* grille des champs */
 .booking-form {
   display: flex;

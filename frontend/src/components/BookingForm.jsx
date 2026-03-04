@@ -34,6 +34,7 @@ export default function BookingForm({ car, onClose }) {
   let days = null;
   let totalPrice = null;
   let dateError = null;
+  let licenseError = null;
 
   if (formData.startDate && formData.endDate) {
     const start = new Date(formData.startDate);
@@ -47,6 +48,26 @@ export default function BookingForm({ car, onClose }) {
       days = diffDays;
       totalPrice = diffDays * car.pricePerDay;
     }
+
+    // Vérification date d'expiration du permis (pour non connectés)
+    if (!isAuthenticated && formData.licenseExpiry && formData.endDate) {
+      const licenseExpiryDate = new Date(formData.licenseExpiry);
+      const rentalEndDate = new Date(formData.endDate);
+      
+      if (licenseExpiryDate < rentalEndDate) {
+        licenseError = "Votre permis expire avant la fin de la location. Veuillez le renouveler.";
+      }
+    }
+
+    // Vérification pour utilisateur connecté
+    if (isAuthenticated && user.licenseExpiry && formData.endDate) {
+      const licenseExpiryDate = new Date(user.licenseExpiry);
+      const rentalEndDate = new Date(formData.endDate);
+      
+      if (licenseExpiryDate < rentalEndDate) {
+        licenseError = "Votre permis expire avant la fin de la location. Veuillez mettre à jour votre profil.";
+      }
+    }
   }
 
   const handleSubmit = async (e) => {
@@ -57,31 +78,61 @@ export default function BookingForm({ car, onClose }) {
       return;
     }
 
+    if (licenseError) {
+      alert(licenseError);
+      return;
+    }
+
     if (!days) {
       alert("Veuillez choisir des dates valides.");
       return;
     }
 
+    // Validation du numéro de permis pour non connectés
+    if (!isAuthenticated && formData.licenseNumber) {
+      const licenseNum = formData.licenseNumber.trim();
+      if (licenseNum.length < 6 || licenseNum.length > 20) {
+        alert("Le numéro de permis doit contenir entre 6 et 20 caractères.");
+        return;
+      }
+    }
+
     try {
+      // Si connecté, utiliser les infos du user, sinon formData
+      const userData = isAuthenticated ? {
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        phone: user.phone,
+        licenseNumber: user.licenseNumber,
+        licenseExpiry: user.licenseExpiry,
+      } : {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+        licenseNumber: formData.licenseNumber,
+        licenseExpiry: formData.licenseExpiry,
+      };
+
       await createReservation({
         carId: car.id,
         startDate: formData.startDate,
         endDate: formData.endDate,
         startTime: formData.startTime,
         endTime: formData.endTime,
-        user: {
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email,
-          phone: formData.phone,
-          licenseNumber: formData.licenseNumber,
-          licenseExpiry: formData.licenseExpiry,
-        },
+        user: userData,
       });
 
-      // Store reservation details for the modal
-      setReservationSuccess({ days, totalPrice, email: formData.email });
-      setShowAccountModal(true);
+      // Si déjà connecté, confirmation simple et fermeture
+      if (isAuthenticated) {
+        alert(`Réservation envoyée ! ${days} jour(s) pour ${totalPrice}€. Vous recevrez une confirmation par email.`);
+        onClose();
+      } else {
+        // Si non connecté, afficher la modale de création de compte
+        setReservationSuccess({ days, totalPrice, email: formData.email });
+        setShowAccountModal(true);
+      }
     } catch (error) {
       alert(error.message || "Erreur lors de la réservation.");
     }
@@ -121,117 +172,133 @@ export default function BookingForm({ car, onClose }) {
             Demande de réservation pour {car.brand} {car.model}
           </h3>
 
+          {isAuthenticated && (
+            <p className="booking-user-info">
+              Réservation pour : <strong>{user.firstName} {user.lastName}</strong> ({user.email})
+            </p>
+          )}
+
           <form className="booking-form" onSubmit={handleSubmit}>
             <div className="booking-form-grid">
+              {/* Afficher les champs d'identité seulement si NON connecté */}
+              {!isAuthenticated && (
+                <>
+                  <div className="booking-form-group">
+                    <label>Prénom</label>
+                    <input
+                      name="firstName"
+                      value={formData.firstName}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+
+                  <div className="booking-form-group">
+                    <label>Nom</label>
+                    <input
+                      name="lastName"
+                      value={formData.lastName}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+
+                  <div className="booking-form-group">
+                    <label>Email</label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+
+                  <div className="booking-form-group">
+                    <label>Téléphone</label>
+                    <input
+                      type="tel"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+
+                  <div className="booking-form-group">
+                    <label>Numéro de permis</label>
+                    <input
+                      name="licenseNumber"
+                      value={formData.licenseNumber}
+                      onChange={handleChange}
+                      placeholder="6 à 20 caractères"
+                      minLength={6}
+                      maxLength={20}
+                      required
+                    />
+                  </div>
+
+                  <div className="booking-form-group">
+                    <label>Expiration permis</label>
+                    <input
+                      type="date"
+                      name="licenseExpiry"
+                      value={formData.licenseExpiry}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+                </>
+              )}
+
+              {/* Champs de dates toujours visibles */}
               <div className="booking-form-group">
-                <label>Prénom</label>
+                <label>Date de début</label>
                 <input
-                  name="firstName"
-                  value={formData.firstName}
+                  type="date"
+                  name="startDate"
+                  value={formData.startDate}
                   onChange={handleChange}
                   required
                 />
               </div>
 
-          <div className="booking-form-group">
-            <label>Nom</label>
-            <input
-              name="lastName"
-              value={formData.lastName}
-              onChange={handleChange}
-              required
-            />
-          </div>
+              <div className="booking-form-group">
+                <label>Heure de début</label>
+                <input
+                  type="time"
+                  name="startTime"
+                  value={formData.startTime}
+                  onChange={handleChange}
+                />
+              </div>
 
-          <div className="booking-form-group">
-            <label>Email</label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-            />
-          </div>
+              <div className="booking-form-group">
+                <label>Date de fin</label>
+                <input
+                  type="date"
+                  name="endDate"
+                  value={formData.endDate}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
 
-          <div className="booking-form-group">
-            <label>Téléphone</label>
-            <input
-              type="tel"
-              name="phone"
-              value={formData.phone}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="booking-form-group">
-            <label>Numéro de permis</label>
-            <input
-              name="licenseNumber"
-              value={formData.licenseNumber}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="booking-form-group">
-            <label>Expiration permis</label>
-            <input
-              type="date"
-              name="licenseExpiry"
-              value={formData.licenseExpiry}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="booking-form-group">
-            <label>Date de début</label>
-            <input
-              type="date"
-              name="startDate"
-              value={formData.startDate}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="booking-form-group">
-            <label>Heure de début</label>
-            <input
-              type="time"
-              name="startTime"
-              value={formData.startTime}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div className="booking-form-group">
-            <label>Date de fin</label>
-            <input
-              type="date"
-              name="endDate"
-              value={formData.endDate}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="booking-form-group">
-            <label>Heure de fin</label>
-            <input
-              type="time"
-              name="endTime"
-              value={formData.endTime}
-              onChange={handleChange}
-            />
-          </div>
-        </div>
+              <div className="booking-form-group">
+                <label>Heure de fin</label>
+                <input
+                  type="time"
+                  name="endTime"
+                  value={formData.endTime}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
 
         {dateError && <p className="booking-error">{dateError}</p>}
+        {licenseError && <p className="booking-error">{licenseError}</p>}
 
-        {days && !dateError && (
+        {days && !dateError && !licenseError && (
           <div className="booking-summary">
             <p>Durée : <strong>{days}</strong> jour(s)</p>
             <p>Prix estimé : <strong>{totalPrice}€</strong></p>
