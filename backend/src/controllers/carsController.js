@@ -1,6 +1,144 @@
 import mongoose from "mongoose";
 import { Car } from "../models/index.js";
 
+const seedFleet = [
+  {
+    brand: "Peugeot",
+    model: "308 SW",
+    category: "BREAK",
+    year: 2022,
+    licensePlate: "AA-308-SW",
+    pricePerDay: 39,
+    seats: 5,
+    luggage: 3,
+    transmission: "Auto",
+    fuel: "Essence",
+    imageUrl: "/cars/peugeot-308-sw-night.jpeg",
+    description:
+      "Parfaite pour les déplacements à Paris, confortable et économique, idéale pour les familles et les longs trajets.",
+  },
+  {
+    brand: "Peugeot",
+    model: "508",
+    category: "BERLINE",
+    year: 2021,
+    licensePlate: "BB-508-PA",
+    pricePerDay: 49,
+    seats: 5,
+    luggage: 3,
+    transmission: "Auto",
+    fuel: "Diesel",
+    imageUrl: "/cars/peugeot-508.jpeg",
+    description:
+      "Berline élégante idéale pour les trajets confortables dans Paris et en Île-de-France.",
+  },
+  {
+    brand: "Nissan",
+    model: "Micra Black",
+    category: "CITADINE",
+    year: 2020,
+    licensePlate: "CC-111-MB",
+    pricePerDay: 36,
+    seats: 5,
+    luggage: 2,
+    transmission: "Manuel",
+    fuel: "Essence",
+    imageUrl: "/cars/nissan-micra-black.jpeg",
+    description:
+      "Micra noire compacte, parfaite pour circuler et se garer facilement dans le centre de Paris.",
+  },
+  {
+    brand: "Opel",
+    model: "Corsa Rouge",
+    category: "CITADINE",
+    year: 2021,
+    licensePlate: "DD-207-CR",
+    pricePerDay: 35,
+    seats: 5,
+    luggage: 2,
+    transmission: "Manuel",
+    fuel: "Essence",
+    imageUrl: "/cars/opel-corsa-red.jpeg",
+    description:
+      "Corsa rouge dynamique, idéale pour les courts séjours et les déplacements urbains.",
+  },
+  {
+    brand: "Toyota",
+    model: "Yaris Rouge",
+    category: "CITADINE",
+    year: 2022,
+    licensePlate: "EE-512-YR",
+    pricePerDay: 37,
+    seats: 5,
+    luggage: 2,
+    transmission: "Auto",
+    fuel: "Hybride",
+    imageUrl: "/cars/toyota-yaris-red.jpeg",
+    description:
+      "Citadine hybride économique, parfaite pour limiter la consommation en ville.",
+  },
+  {
+    brand: "Nissan",
+    model: "Micra White",
+    category: "CITADINE",
+    year: 2020,
+    licensePlate: "FF-309-MW",
+    pricePerDay: 36,
+    seats: 5,
+    luggage: 2,
+    transmission: "Manuel",
+    fuel: "Essence",
+    imageUrl: "/cars/nissan-micra-white.jpeg",
+    description:
+      "Micra blanche polyvalente, idéale pour les déplacements quotidiens sur Paris.",
+  },
+  {
+    brand: "Opel",
+    model: "Corsa Grise",
+    category: "CITADINE",
+    year: 2021,
+    licensePlate: "GG-411-CS",
+    pricePerDay: 35,
+    seats: 5,
+    luggage: 2,
+    transmission: "Manuel",
+    fuel: "Essence",
+    imageUrl: "/cars/opel-corsa-silver.jpeg",
+    description:
+      "Corsa grise discrète et confortable, pour les séjours courts comme longs.",
+  },
+  {
+    brand: "Skoda",
+    model: "Rapid",
+    category: "BERLINE",
+    year: 2019,
+    licensePlate: "HH-620-SR",
+    pricePerDay: 45,
+    seats: 5,
+    luggage: 3,
+    transmission: "Manuel",
+    fuel: "Diesel",
+    imageUrl: "/cars/skoda-rapid-black.jpeg",
+    description:
+      "Berline spacieuse idéale pour les trajets en groupe ou en famille autour de Paris.",
+  },
+  {
+    brand: "Nissan",
+    model: "Primera",
+    category: "BERLINE",
+    year: 2018,
+    licensePlate: "II-287-NP",
+    pricePerDay: 42,
+    seats: 5,
+    luggage: 3,
+    transmission: "Manuel",
+    fuel: "Essence",
+    imageUrl: "/cars/nissan-primera-grey.jpeg",
+    description:
+      "Berline confortable, parfaite pour les trajets domicile–aéroport ou les week-ends.",
+  },
+];
+
 function mapCar(carDoc) {
   const car = carDoc.toObject({ getters: true });
   return { id: car._id.toString(), ...car, _id: undefined };
@@ -48,61 +186,24 @@ export async function getCarById(req, res, next) {
 
 export async function seedCars(req, res, next) {
   try {
-    const existing = await Car.countDocuments();
-    if (existing > 0) {
-      return res.json({ data: { inserted: 0, message: "Cars already exist" } });
-    }
+    const syncResult = await Car.bulkWrite(
+      seedFleet.map((car) => ({
+        updateOne: {
+          filter: { licensePlate: car.licensePlate },
+          update: { $set: car },
+          upsert: true,
+        },
+      }))
+    );
 
-    const cars = [
-      {
-        brand: "Peugeot",
-        model: "308 SW",
-        category: "BREAK",
-        year: 2022,
-        licensePlate: "AA-308-SW",
-        pricePerDay: 39,
-        seats: 5,
-        luggage: 3,
-        transmission: "Auto",
-        fuel: "Essence",
-        imageUrl: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1200&q=80",
-        description:
-          "Parfaite pour les déplacements à Paris, confortable et économique, idéale pour les familles et les longs trajets.",
+    res.json({
+      data: {
+        totalSeeded: seedFleet.length,
+        inserted: syncResult.upsertedCount,
+        updated: syncResult.modifiedCount,
+        matched: syncResult.matchedCount,
       },
-      {
-        brand: "Peugeot",
-        model: "508",
-        category: "BERLINE",
-        year: 2021,
-        licensePlate: "BB-508-PA",
-        pricePerDay: 49,
-        seats: 5,
-        luggage: 3,
-        transmission: "Auto",
-        fuel: "Diesel",
-        imageUrl: "https://images.unsplash.com/photo-1542362567-b07e54358753?auto=format&fit=crop&w=1200&q=80",
-        description:
-          "Berline élégante idéale pour les trajets confortables dans Paris et en Île-de-France.",
-      },
-      {
-        brand: "Nissan",
-        model: "Micra Black",
-        category: "CITADINE",
-        year: 2020,
-        licensePlate: "CC-111-MB",
-        pricePerDay: 36,
-        seats: 5,
-        luggage: 2,
-        transmission: "Manuel",
-        fuel: "Essence",
-        imageUrl: "https://images.unsplash.com/photo-1525609004556-c46c7d6cf023?auto=format&fit=crop&w=1200&q=80",
-        description:
-          "Micra noire compacte, parfaite pour circuler et se garer facilement dans le centre de Paris.",
-      },
-    ];
-
-    const created = await Car.insertMany(cars);
-    res.json({ data: { inserted: created.length } });
+    });
   } catch (error) {
     next(error);
   }
