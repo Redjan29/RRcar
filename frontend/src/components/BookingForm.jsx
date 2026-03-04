@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createReservation } from "../api/reservations";
 import "./BookingForm.css";
 
 export default function BookingForm({ car, onClose }) {
@@ -7,6 +8,8 @@ export default function BookingForm({ car, onClose }) {
     lastName: "",
     email: "",
     phone: "",
+    licenseNumber: "",
+    licenseExpiry: "",
     startDate: "",
     endDate: "",
     startTime: "",
@@ -37,7 +40,7 @@ export default function BookingForm({ car, onClose }) {
     }
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (dateError) {
@@ -50,18 +53,31 @@ export default function BookingForm({ car, onClose }) {
       return;
     }
 
-    console.log({
-      ...formData,
-      carId: car.id,
-      days,
-      totalPrice,
-    });
+    try {
+      await createReservation({
+        carId: car.id,
+        startDate: formData.startDate,
+        endDate: formData.endDate,
+        startTime: formData.startTime,
+        endTime: formData.endTime,
+        user: {
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          phone: formData.phone,
+          licenseNumber: formData.licenseNumber,
+          licenseExpiry: formData.licenseExpiry,
+        },
+      });
 
-    alert(
-      `Demande envoyée pour ${days} jour(s), prix estimé : ${totalPrice}€ (simulation).`
-    );
+      alert(
+        `Demande envoyée pour ${days} jour(s), prix estimé : ${totalPrice}€.`
+      );
 
-    onClose();
+      onClose();
+    } catch (error) {
+      alert(error.message || "Erreur lors de la réservation.");
+    }
   };
 
   return (
@@ -109,6 +125,27 @@ export default function BookingForm({ car, onClose }) {
               type="tel"
               name="phone"
               value={formData.phone}
+              onChange={handleChange}
+              required
+            />
+          </div>
+
+          <div className="booking-form-group">
+            <label>Numéro de permis</label>
+            <input
+              name="licenseNumber"
+              value={formData.licenseNumber}
+              onChange={handleChange}
+              required
+            />
+          </div>
+
+          <div className="booking-form-group">
+            <label>Expiration permis</label>
+            <input
+              type="date"
+              name="licenseExpiry"
+              value={formData.licenseExpiry}
               onChange={handleChange}
               required
             />

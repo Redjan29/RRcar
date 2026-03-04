@@ -1,7 +1,7 @@
 // src/pages/CarDetails.jsx
 import { useState, useRef, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { getCarById } from "../data/cars";
+import { fetchCarById } from "../api/cars";
 import BookingForm from "../components/BookingForm";
 import Navbar from "../components/Navbar";
 import { useAppContext } from "../context/AppContext.jsx";
@@ -9,7 +9,9 @@ import "./CarDetails.css";
 
 export default function CarDetails() {
   const { id } = useParams();
-  const car = getCarById(id);
+  const [car, setCar] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   const { formatPrice, language } = useAppContext();
 
@@ -17,10 +19,57 @@ export default function CarDetails() {
   const formRef = useRef(null);
 
   useEffect(() => {
+    let isMounted = true;
+
+    fetchCarById(id)
+      .then((data) => {
+        if (isMounted) {
+          setCar(data);
+        }
+      })
+      .catch((err) => {
+        if (isMounted) {
+          setError(err.message || "Erreur lors du chargement.");
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [id]);
+
+  useEffect(() => {
     if (showForm && formRef.current) {
       formRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   }, [showForm]);
+
+  if (loading) {
+    return (
+      <>
+        <Navbar />
+        <div style={{ padding: 20 }}>
+          <p>Chargement...</p>
+        </div>
+      </>
+    );
+  }
+
+  if (error) {
+    return (
+      <>
+        <Navbar />
+        <div style={{ padding: 20 }}>
+          <p style={{ color: "#b91c1c" }}>{error}</p>
+        </div>
+      </>
+    );
+  }
 
   if (!car) {
     return (
