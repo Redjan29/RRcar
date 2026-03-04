@@ -32,8 +32,8 @@ export default function Login() {
     setError("");
 
     try {
-      await login(formData.email, formData.password);
-      navigate("/");
+      const loggedUser = await login(formData.email, formData.password);
+      navigate(loggedUser?.isAdmin ? "/admin" : "/");
     } catch (err) {
       setError(
         err.message ||

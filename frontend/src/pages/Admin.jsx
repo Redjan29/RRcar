@@ -43,13 +43,13 @@ export default function Admin() {
     try {
       if (activeTab === "dashboard") {
         const response = await getDashboardStats(token);
-        setStats(response.data);
+        setStats(response);
       } else if (activeTab === "reservations") {
         const response = await getAllReservations(token);
-        setReservations(response.data);
+        setReservations(response);
       } else if (activeTab === "users") {
         const response = await getAllUsers(token);
-        setUsers(response.data);
+        setUsers(response);
       }
     } catch (err) {
       setError(err.message || "Erreur lors du chargement des données");
@@ -143,8 +143,16 @@ export default function Admin() {
 
 // Dashboard Stats
 function DashboardView({ stats }) {
-  const pending = stats.reservations.byStatus.find((s) => s._id === "PENDING");
-  const confirmed = stats.reservations.byStatus.find((s) => s._id === "CONFIRMED");
+  if (!stats || !stats.reservations) {
+    return <div className="empty-state"><p>Chargement des statistiques...</p></div>;
+  }
+  
+  const byStatus = Array.isArray(stats.reservations.byStatus)
+    ? stats.reservations.byStatus
+    : [];
+  const recentReservations = Array.isArray(stats.recent) ? stats.recent : [];
+  const pending = byStatus.find((s) => s?._id === "PENDING");
+  const confirmed = byStatus.find((s) => s?._id === "CONFIRMED");
 
   return (
     <div className="dashboard-view">
@@ -197,13 +205,17 @@ function DashboardView({ stats }) {
             </tr>
           </thead>
           <tbody>
-            {stats.recent.map((res) => (
+            {recentReservations.map((res) => (
               <tr key={res._id}>
                 <td>
-                  {res.user.firstName} {res.user.lastName}
+                  {res.user
+                    ? `${res.user.firstName || ""} ${res.user.lastName || ""}`.trim() || "Client inconnu"
+                    : "Client supprimé"}
                 </td>
                 <td>
-                  {res.car.brand} {res.car.model}
+                  {res.car
+                    ? `${res.car.brand || ""} ${res.car.model || ""}`.trim() || "Voiture inconnue"
+                    : "Voiture supprimée"}
                 </td>
                 <td>
                   {new Date(res.startDate).toLocaleDateString()} →{" "}
@@ -225,7 +237,7 @@ function DashboardView({ stats }) {
 }
 
 // Liste des réservations
-function ReservationsView({ reservations, onUpdateStatus }) {
+function ReservationsView({ reservations = [], onUpdateStatus }) {
   const [filterStatus, setFilterStatus] = useState("");
 
   const filteredReservations = filterStatus
@@ -248,31 +260,40 @@ function ReservationsView({ reservations, onUpdateStatus }) {
         </label>
       </div>
 
-      <table className="admin-table">
-        <thead>
-          <tr>
-            <th>Client</th>
-            <th>Email</th>
-            <th>Téléphone</th>
-            <th>Voiture</th>
-            <th>Dates</th>
-            <th>Statut</th>
-            <th>Prix</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filteredReservations.map((res) => (
+      {filteredReservations.length === 0 ? (
+        <div className="empty-state">
+          <p>📋 Aucune réservation trouvée</p>
+        </div>
+      ) : (
+        <table className="admin-table">
+          <thead>
+            <tr>
+              <th>Client</th>
+              <th>Email</th>
+              <th>Téléphone</th>
+              <th>Voiture</th>
+              <th>Dates</th>
+              <th>Statut</th>
+              <th>Prix</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredReservations.map((res) => (
             <tr key={res._id}>
               <td>
-                {res.user.firstName} {res.user.lastName}
+                {res.user
+                  ? `${res.user.firstName || ""} ${res.user.lastName || ""}`.trim() || "Client inconnu"
+                  : "Client supprimé"}
               </td>
-              <td>{res.user.email}</td>
-              <td>{res.user.phone}</td>
+              <td>{res.user?.email || "-"}</td>
+              <td>{res.user?.phone || "-"}</td>
               <td>
-                {res.car.brand} {res.car.model}
+                {res.car
+                  ? `${res.car.brand || ""} ${res.car.model || ""}`.trim() || "Voiture inconnue"
+                  : "Voiture supprimée"}
                 <br />
-                <small>{res.car.licensePlate}</small>
+                <small>{res.car?.licensePlate || "-"}</small>
               </td>
               <td>
                 {new Date(res.startDate).toLocaleDateString()}
@@ -322,17 +343,23 @@ function ReservationsView({ reservations, onUpdateStatus }) {
           ))}
         </tbody>
       </table>
+      )}
     </div>
   );
 }
 
 // Liste des utilisateurs
-function UsersView({ users, onToggleActive }) {
+function UsersView({ users = [], onToggleActive }) {
   return (
     <div className="users-view">
-      <table className="admin-table">
-        <thead>
-          <tr>
+      {users.length === 0 ? (
+        <div className="empty-state">
+          <p>👥 Aucun utilisateur trouvé</p>
+        </div>
+      ) : (
+        <table className="admin-table">
+          <thead>
+            <tr>
             <th>Nom</th>
             <th>Email</th>
             <th>Téléphone</th>
@@ -385,6 +412,7 @@ function UsersView({ users, onToggleActive }) {
           ))}
         </tbody>
       </table>
+      )}
     </div>
   );
 }

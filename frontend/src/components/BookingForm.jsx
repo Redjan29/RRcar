@@ -5,7 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import "./BookingForm.css";
 
 export default function BookingForm({ car, onClose }) {
-  const { login: authLogin } = useAuth();
+  const { login: authLogin, isAuthenticated, user } = useAuth();
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -60,7 +60,7 @@ export default function BookingForm({ car, onClose }) {
     }
 
     // Vérification pour utilisateur connecté
-    if (isAuthenticated && user.licenseExpiry && formData.endDate) {
+    if (isAuthenticated && user?.licenseExpiry && formData.endDate) {
       const licenseExpiryDate = new Date(user.licenseExpiry);
       const rentalEndDate = new Date(formData.endDate);
       
@@ -148,8 +148,8 @@ export default function BookingForm({ car, onClose }) {
     }
 
     try {
-      const response = await activateAccount(reservationSuccess.email, accountPassword);
-      authLogin(response.data.user, response.data.token);
+      await activateAccount(reservationSuccess.email, accountPassword);
+      await authLogin(reservationSuccess.email, accountPassword);
       alert(`Compte créé ! Réservation confirmée pour ${reservationSuccess.days} jour(s).`);
       onClose();
     } catch (error) {

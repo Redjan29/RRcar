@@ -1,5 +1,5 @@
 // src/components/Navbar.jsx
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import logo from "../assets/RRCAR.jpeg";
 import "./Navbar.css";
 import { useAppContext } from "../context/AppContext.jsx";
@@ -9,6 +9,9 @@ export default function Navbar() {
   const { currency, setCurrency, language, setLanguage } = useAppContext();
   const { isAuthenticated, user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const isAdminPage = location.pathname.startsWith("/admin");
+  const logoTarget = user?.isAdmin ? "/admin" : "/";
 
   const handleLogout = () => {
     logout();
@@ -19,7 +22,7 @@ export default function Navbar() {
     <header className="navbar">
       {/* Logo */}
       <div className="navbar-left">
-        <Link to="/" className="navbar-logo-link">
+        <Link to={logoTarget} className="navbar-logo-link">
           <img src={logo} alt="R&R Cars" className="navbar-logo-img" />
         </Link>
       </div>
@@ -53,7 +56,7 @@ export default function Navbar() {
               {language === "fr" ? "Bonjour" : "Hello"},{" "}
               {user?.firstName || "User"}
             </span>
-            {user?.isAdmin && (
+            {user?.isAdmin && !isAdminPage && (
               <Link to="/admin" className="navbar-admin-link">
                 🔧 Admin
               </Link>
