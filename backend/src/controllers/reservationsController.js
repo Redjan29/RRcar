@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { Car, Reservation, User } from "../models/index.js";
+import { Car, Reservation, User, BlockedPeriod } from "../models/index.js";
 
 function parseDate(value, label) {
   const date = new Date(value);
@@ -78,6 +78,26 @@ export async function createReservation(req, res, next) {
     if (!car) {
       const err = new Error("Car not found");
       err.status = 404;
+      throw err;
+    }
+
+    // Vérifier que la voiture est disponible (pas en maintenance ou indisponible)
+    if (car.status !== "DISPONIBLE") {
+      const err = new Error("Car is not available for reservation");
+      err.status = 400;
+      throw err;
+    }
+
+    // Vérifier qu'il n'y a pas de période de blocage
+    const blockedPeriod = await BlockedPeriod.findOne({
+      car: carId,
+      startDate: { $lte: end },
+      endDate: { $gte: start },
+    });
+
+    if (blockedPeriod) {
+      const err = new Error(`Car is blocked from ${blockedPeriod.startDate.toLocaleDateString()} to ${blockedPeriod.endDate.toLocaleDateString()}: ${blockedPeriod.reason}`);
+      err.status = 409;
       throw err;
     }
 

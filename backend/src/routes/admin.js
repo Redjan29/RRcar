@@ -8,6 +8,9 @@ import {
   updateUser,
   getAllCars,
   updateCar,
+  getBlockedPeriods,
+  createBlockedPeriod,
+  deleteBlockedPeriod,
 } from "../controllers/adminController.js";
 
 const router = express.Router();
@@ -29,5 +32,10 @@ router.patch("/users/:id", updateUser);
 // Gestion des voitures
 router.get("/cars", getAllCars);
 router.patch("/cars/:id", updateCar);
+
+// Gestion des périodes bloquées
+router.get("/cars/:carId/blocks", getBlockedPeriods);
+router.post("/cars/:carId/blocks", createBlockedPeriod);
+router.delete("/blocks/:id", deleteBlockedPeriod);
 
 export default router;

@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { Car, Reservation, User } from "../models/index.js";
+import { Car, Reservation, User, BlockedPeriod } from "../models/index.js";
 
 // Statistiques du dashboard
 export async function getDashboardStats(req, res, next) {
@@ -292,6 +292,103 @@ export async function updateUser(req, res, next) {
     }
 
     res.json({ data: user });
+  } catch (error) {
+    next(error);
+  }
+}
+
+// Récupérer toutes les périodes bloquées d'une voiture
+export async function getBlockedPeriods(req, res, next) {
+  try {
+    const { carId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(carId)) {
+      const err = new Error("Invalid car ID");
+      err.status = 400;
+      throw err;
+    }
+
+    const blockedPeriods = await BlockedPeriod.find({ car: carId }).sort({ startDate: 1 });
+    res.json({ data: blockedPeriods });
+  } catch (error) {
+    next(error);
+  }
+}
+
+// Créer une nouvelle période bloquée
+export async function createBlockedPeriod(req, res, next) {
+  try {
+    const { carId } = req.params;
+    const { startDate, endDate, reason } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(carId)) {
+      const err = new Error("Invalid car ID");
+      err.status = 400;
+      throw err;
+    }
+
+    if (!startDate || !endDate) {
+      const err = new Error("startDate and endDate are required");
+      err.status = 400;
+      throw err;
+    }
+
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    if (start >= end) {
+      const err = new Error("endDate must be after startDate");
+      err.status = 400;
+      throw err;
+    }
+
+    // Vérifier qu'il n'y a pas de réservations confirmées sur cette période
+    const conflictingReservation = await Reservation.findOne({
+      car: carId,
+      status: { $in: ["CONFIRMED", "ACTIVE"] },
+      startDate: { $lte: end },
+      endDate: { $gte: start },
+    });
+
+    if (conflictingReservation) {
+      const err = new Error("Cannot block period: there is a confirmed reservation during this time");
+      err.status = 409;
+      throw err;
+    }
+
+    const blockedPeriod = await BlockedPeriod.create({
+      car: carId,
+      startDate: start,
+      endDate: end,
+      reason: reason || "Indisponibilité temporaire",
+    });
+
+    res.status(201).json({ data: blockedPeriod });
+  } catch (error) {
+    next(error);
+  }
+}
+
+// Supprimer une période bloquée
+export async function deleteBlockedPeriod(req, res, next) {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      const err = new Error("Invalid blocked period ID");
+      err.status = 400;
+      throw err;
+    }
+
+    const blockedPeriod = await BlockedPeriod.findByIdAndDelete(id);
+
+    if (!blockedPeriod) {
+      const err = new Error("Blocked period not found");
+      err.status = 404;
+      throw err;
+    }
+
+    res.json({ data: { message: "Blocked period deleted successfully" } });
   } catch (error) {
     next(error);
   }

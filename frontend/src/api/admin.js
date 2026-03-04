@@ -70,3 +70,33 @@ export function updateCar(token, carId, updates) {
     },
   });
 }
+
+// Récupérer les périodes bloquées d'une voiture
+export function getBlockedPeriods(token, carId) {
+  return apiFetch(`/api/admin/cars/${carId}/blocks`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
+
+// Créer une période bloquée
+export function createBlockedPeriod(token, carId, data) {
+  return apiFetch(`/api/admin/cars/${carId}/blocks`, {
+    method: "POST",
+    body: JSON.stringify(data),
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
+
+// Supprimer une période bloquée
+export function deleteBlockedPeriod(token, blockId) {
+  return apiFetch(`/api/admin/blocks/${blockId}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}

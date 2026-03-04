@@ -10,6 +10,9 @@ import {
   updateReservationStatus,
   updateCar,
   updateUser,
+  getBlockedPeriods,
+  createBlockedPeriod,
+  deleteBlockedPeriod,
 } from "../api/admin";
 import "./Admin.css";
 
@@ -127,6 +130,12 @@ export default function Admin() {
           >
             🚗 Voitures
           </button>
+          <button
+            className={activeTab === "calendar" ? "active" : ""}
+            onClick={() => setActiveTab("calendar")}
+          >
+            📆 Calendrier
+          </button>
         </div>
 
         {error && <div className="admin-error">{error}</div>}
@@ -157,6 +166,10 @@ export default function Admin() {
 
               {activeTab === "cars" && (
                 <CarsView cars={cars} onUpdateCar={handleUpdateCar} />
+              )}
+
+              {activeTab === "calendar" && (
+                <CalendarView token={token} />
               )}
             </>
           )}
@@ -442,8 +455,147 @@ function UsersView({ users = [], onToggleActive }) {
   );
 }
 
+// Modal pour gérer les périodes bloquées
+function BlockedPeriodsModal({ car, token, onClose }) {
+  const [blockedPeriods, setBlockedPeriods] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [formData, setFormData] = useState({
+    startDate: "",
+    endDate: "",
+    reason: "",
+  });
+
+  useEffect(() => {
+    loadBlockedPeriods();
+  }, []);
+
+  async function loadBlockedPeriods() {
+    setLoading(true);
+    try {
+      const response = await getBlockedPeriods(token, car._id);
+      setBlockedPeriods(response);
+    } catch (err) {
+      alert(err.message || "Erreur lors du chargement des blocages");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleAddBlock(e) {
+    e.preventDefault();
+    
+    if (!formData.startDate || !formData.endDate) {
+      alert("Veuillez remplir les dates");
+      return;
+    }
+
+    try {
+      await createBlockedPeriod(token, car._id, formData);
+      setFormData({ startDate: "", endDate: "", reason: "" });
+      loadBlockedPeriods();
+    } catch (err) {
+      alert(err.message || "Erreur lors de la création du blocage");
+    }
+  }
+
+  async function handleDeleteBlock(blockId) {
+    if (!window.confirm("Supprimer ce blocage ?")) {
+      return;
+    }
+
+    try {
+      await deleteBlockedPeriod(token, blockId);
+      loadBlockedPeriods();
+    } catch (err) {
+      alert(err.message || "Erreur lors de la suppression");
+    }
+  }
+
+  function formatDate(dateString) {
+    return new Date(dateString).toLocaleDateString("fr-FR", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  }
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2>Blocages - {car.brand} {car.model}</h2>
+          <button className="btn-close" onClick={onClose}>×</button>
+        </div>
+
+        <div className="modal-body">
+          <form onSubmit={handleAddBlock} className="block-form">
+            <h3>Ajouter un blocage</h3>
+            <div className="form-row">
+              <div className="form-group">
+                <label>Date début</label>
+                <input
+                  type="date"
+                  value={formData.startDate}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, startDate: e.target.value }))}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Date fin</label>
+                <input
+                  type="date"
+                  value={formData.endDate}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, endDate: e.target.value }))}
+                  required
+                />
+              </div>
+            </div>
+            <div className="form-group">
+              <label>Raison (optionnel)</label>
+              <input
+                type="text"
+                placeholder="Maintenance, révision..."
+                value={formData.reason}
+                onChange={(e) => setFormData((prev) => ({ ...prev, reason: e.target.value }))}
+              />
+            </div>
+            <button type="submit" className="btn-approve">Ajouter le blocage</button>
+          </form>
+
+          <h3 style={{ marginTop: "2rem" }}>Blocages actifs</h3>
+          {loading ? (
+            <p>Chargement...</p>
+          ) : blockedPeriods.length === 0 ? (
+            <p className="empty-state">Aucun blocage pour cette voiture</p>
+          ) : (
+            <ul className="blocks-list">
+              {blockedPeriods.map((block) => (
+                <li key={block._id} className="block-item">
+                  <div className="block-info">
+                    <strong>{formatDate(block.startDate)} → {formatDate(block.endDate)}</strong>
+                    <br />
+                    <small>{block.reason || "Aucune raison spécifiée"}</small>
+                  </div>
+                  <button
+                    className="btn-deactivate"
+                    onClick={() => handleDeleteBlock(block._id)}
+                  >
+                    Supprimer
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function CarsView({ cars = [], onUpdateCar }) {
+  const { token } = useAuth();
   const [editingCarId, setEditingCarId] = useState(null);
+  const [selectedCarForBlocks, setSelectedCarForBlocks] = useState(null);
   const [formData, setFormData] = useState({
     pricePerDay: "",
     description: "",
@@ -511,6 +663,7 @@ function CarsView({ cars = [], onUpdateCar }) {
             <th>Statut</th>
             <th>Description</th>
             <th>Specs</th>
+            <th>Blocages</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -639,6 +792,15 @@ function CarsView({ cars = [], onUpdateCar }) {
                   )}
                 </td>
                 <td className="actions-cell">
+                  <button
+                    className="btn-info"
+                    onClick={() => setSelectedCarForBlocks(car)}
+                    style={{ fontSize: "0.85rem", padding: "0.4rem 0.6rem" }}
+                  >
+                    Gérer
+                  </button>
+                </td>
+                <td className="actions-cell">
                   {isEditing ? (
                     <>
                       <button className="btn-approve" onClick={handleSave}>
@@ -659,6 +821,210 @@ function CarsView({ cars = [], onUpdateCar }) {
           })}
         </tbody>
       </table>
+
+      {selectedCarForBlocks && (
+        <BlockedPeriodsModal
+          car={selectedCarForBlocks}
+          token={token}
+          onClose={() => setSelectedCarForBlocks(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+// Vue calendrier
+function CalendarView({ token }) {
+  const [cars, setCars] = useState([]);
+  const [reservations, setReservations] = useState([]);
+  const [blockedPeriods, setBlockedPeriods] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+
+  useEffect(() => {
+    loadCalendarData();
+  }, []);
+
+  async function loadCalendarData() {
+    setLoading(true);
+    try {
+      const [carsRes, reservationsRes] = await Promise.all([
+        getAllCars(token),
+        getAllReservations(token),
+      ]);
+
+      setCars(carsRes);
+      setReservations(reservationsRes);
+
+      // Charger tous les blocages pour toutes les voitures
+      const blocksPromises = carsRes.map((car) =>
+        getBlockedPeriods(token, car._id).catch(() => [])
+      );
+      const allBlocks = await Promise.all(blocksPromises);
+      setBlockedPeriods(allBlocks.flat());
+    } catch (err) {
+      alert(err.message || "Erreur lors du chargement du calendrier");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function getDaysInMonth(date) {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const days = [];
+
+    for (let d = new Date(firstDay); d <= lastDay; d.setDate(d.getDate() + 1)) {
+      days.push(new Date(d));
+    }
+
+    return days;
+  }
+
+  function isDateInRange(date, start, end) {
+    const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
+    const s = new Date(start);
+    s.setHours(0, 0, 0, 0);
+    const e = new Date(end);
+    e.setHours(0, 0, 0, 0);
+    return d >= s && d <= e;
+  }
+
+  function getReservationForCarOnDate(carId, date) {
+    return reservations.find(
+      (r) =>
+        r.car?._id === carId &&
+        ["PENDING", "CONFIRMED", "ACTIVE"].includes(r.status) &&
+        isDateInRange(date, r.startDate, r.endDate)
+    );
+  }
+
+  function getBlockForCarOnDate(carId, date) {
+    return blockedPeriods.find(
+      (b) => b.car === carId && isDateInRange(date, b.startDate, b.endDate)
+    );
+  }
+
+  const days = getDaysInMonth(currentMonth);
+
+  function goToPreviousMonth() {
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
+  }
+
+  function goToNextMonth() {
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
+  }
+
+  function goToToday() {
+    setCurrentMonth(new Date());
+  }
+
+  if (loading) {
+    return <p>Chargement du calendrier...</p>;
+  }
+
+  return (
+    <div className="calendar-view">
+      <div className="calendar-header">
+        <h2>
+          {currentMonth.toLocaleDateString("fr-FR", {
+            month: "long",
+            year: "numeric",
+          })}
+        </h2>
+        <div className="calendar-controls">
+          <button className="btn-calendar" onClick={goToPreviousMonth}>
+            ◀ Mois précédent
+          </button>
+          <button className="btn-calendar" onClick={goToToday}>
+            Aujourd'hui
+          </button>
+          <button className="btn-calendar" onClick={goToNextMonth}>
+            Mois suivant ▶
+          </button>
+        </div>
+      </div>
+
+      <div className="calendar-legend">
+        <div className="legend-item">
+          <div className="legend-color pending"></div>
+          <span>En attente</span>
+        </div>
+        <div className="legend-item">
+          <div className="legend-color confirmed"></div>
+          <span>Confirmée</span>
+        </div>
+        <div className="legend-item">
+          <div className="legend-color active"></div>
+          <span>Active</span>
+        </div>
+        <div className="legend-item">
+          <div className="legend-color blocked"></div>
+          <span>Bloquée</span>
+        </div>
+      </div>
+
+      <div className="calendar-grid-container">
+        <table className="calendar-table">
+          <thead>
+            <tr>
+              <th className="car-column">Voiture</th>
+              {days.map((day, i) => (
+                <th key={i} className="day-column">
+                  <div className="day-header">
+                    <div className="day-name">
+                      {day.toLocaleDateString("fr-FR", { weekday: "short" })}
+                    </div>
+                    <div className="day-number">{day.getDate()}</div>
+                  </div>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {cars.map((car) => (
+              <tr key={car._id}>
+                <td className="car-column">
+                  <div className="car-name">
+                    <strong>{car.brand} {car.model}</strong>
+                    <br />
+                    <small>{car.licensePlate}</small>
+                  </div>
+                </td>
+                {days.map((day, i) => {
+                  const reservation = getReservationForCarOnDate(car._id, day);
+                  const block = getBlockForCarOnDate(car._id, day);
+
+                  let className = "calendar-cell";
+                  let title = "";
+
+                  if (block) {
+                    className += " blocked";
+                    title = `Bloquée: ${block.reason}`;
+                  } else if (reservation) {
+                    className += ` ${reservation.status.toLowerCase()}`;
+                    title = `${reservation.user?.firstName || "Client"} ${reservation.user?.lastName || ""}`;
+                  }
+
+                  return (
+                    <td key={i} className={className} title={title}>
+                      {reservation && (
+                        <div className="reservation-marker"></div>
+                      )}
+                      {block && (
+                        <div className="block-marker">🔒</div>
+                      )}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

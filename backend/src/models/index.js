@@ -2,3 +2,4 @@ export { User } from "./User.js";
 export { Car } from "./Car.js";
 export { Reservation } from "./Reservation.js";
 export { Contract } from "./Contract.js";
+export { BlockedPeriod } from "./BlockedPeriod.js";
