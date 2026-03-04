@@ -1,8 +1,11 @@
 import { useState } from "react";
 import { createReservation } from "../api/reservations";
+import { activateAccount } from "../api/auth";
+import { useAuth } from "../context/AuthContext";
 import "./BookingForm.css";
 
 export default function BookingForm({ car, onClose }) {
+  const { login: authLogin } = useAuth();
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -15,6 +18,12 @@ export default function BookingForm({ car, onClose }) {
     startTime: "",
     endTime: "",
   });
+
+  const [showAccountModal, setShowAccountModal] = useState(false);
+  const [accountPassword, setAccountPassword] = useState("");
+  const [accountError, setAccountError] = useState("");
+  const [reservationSuccess, setReservationSuccess] = useState(null);
+
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -70,33 +79,59 @@ export default function BookingForm({ car, onClose }) {
         },
       });
 
-      alert(
-        `Demande envoyée pour ${days} jour(s), prix estimé : ${totalPrice}€.`
-      );
-
-      onClose();
+      // Store reservation details for the modal
+      setReservationSuccess({ days, totalPrice, email: formData.email });
+      setShowAccountModal(true);
     } catch (error) {
       alert(error.message || "Erreur lors de la réservation.");
     }
   };
 
+  const handleCreateAccount = async (e) => {
+    e.preventDefault();
+    setAccountError("");
+
+    if (accountPassword.length < 6) {
+      setAccountError("Le mot de passe doit contenir au moins 6 caractères");
+      return;
+    }
+
+    try {
+      const response = await activateAccount(reservationSuccess.email, accountPassword);
+      authLogin(response.data.user, response.data.token);
+      alert(`Compte créé ! Réservation confirmée pour ${reservationSuccess.days} jour(s).`);
+      onClose();
+    } catch (error) {
+      setAccountError(error.message || "Erreur lors de la création du compte.");
+    }
+  };
+
+  const handleSkipAccount = () => {
+    alert(
+      `Demande envoyée pour ${reservationSuccess.days} jour(s), prix estimé : ${reservationSuccess.totalPrice}€. Vous recevrez un email de confirmation.`
+    );
+    onClose();
+  };
+
   return (
     <div className="booking-form-container">
-      <h3>
-        Demande de réservation pour {car.brand} {car.model}
-      </h3>
+      {!showAccountModal ? (
+        <>
+          <h3>
+            Demande de réservation pour {car.brand} {car.model}
+          </h3>
 
-      <form className="booking-form" onSubmit={handleSubmit}>
-        <div className="booking-form-grid">
-          <div className="booking-form-group">
-            <label>Prénom</label>
-            <input
-              name="firstName"
-              value={formData.firstName}
-              onChange={handleChange}
-              required
-            />
-          </div>
+          <form className="booking-form" onSubmit={handleSubmit}>
+            <div className="booking-form-grid">
+              <div className="booking-form-group">
+                <label>Prénom</label>
+                <input
+                  name="firstName"
+                  value={formData.firstName}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
 
           <div className="booking-form-group">
             <label>Nom</label>
@@ -216,6 +251,47 @@ export default function BookingForm({ car, onClose }) {
           </button>
         </div>
       </form>
+        </>
+      ) : (
+        <div className="account-modal">
+          <h3>✅ Réservation envoyée !</h3>
+          <p>
+            Votre demande pour {reservationSuccess.days} jour(s) a été envoyée
+            (prix estimé : {reservationSuccess.totalPrice}€).
+          </p>
+          <p className="modal-question">
+            Créer un compte pour suivre votre réservation ?
+          </p>
+
+          <form onSubmit={handleCreateAccount} className="account-form">
+            <div className="booking-form-group">
+              <label>Mot de passe (min. 6 caractères)</label>
+              <input
+                type="password"
+                value={accountPassword}
+                onChange={(e) => setAccountPassword(e.target.value)}
+                placeholder="Choisissez un mot de passe"
+                autoFocus
+              />
+            </div>
+
+            {accountError && <p className="booking-error">{accountError}</p>}
+
+            <div className="booking-form-actions">
+              <button type="submit" className="booking-submit">
+                Créer mon compte
+              </button>
+              <button
+                type="button"
+                className="booking-cancel"
+                onClick={handleSkipAccount}
+              >
+                Continuer sans compte
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 }

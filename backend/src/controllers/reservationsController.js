@@ -90,13 +90,13 @@ export async function createReservation(req, res, next) {
     if (!existingUser) {
       existingUser = await User.create({
         email: user.email,
-        password: "temporary",
         firstName: user.firstName,
         lastName: user.lastName,
         phone: user.phone,
         address: user.address,
         licenseNumber: user.licenseNumber,
         licenseExpiry: user.licenseExpiry,
+        hasPassword: false,
       });
     }
 

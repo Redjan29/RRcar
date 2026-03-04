@@ -1,18 +1,15 @@
 import express from "express";
+import { register, login, getProfile, activateAccount } from "../controllers/authController.js";
+import { authMiddleware } from "../middlewares/auth.js";
 
 const router = express.Router();
 
-// Routes d'authentification - placeholder pour l'instant
-router.post("/register", (req, res) => {
-  res.json({ message: "Register endpoint - à implémenter" });
-});
+// Routes publiques
+router.post("/register", register);
+router.post("/login", login);
+router.post("/activate-account", activateAccount);
 
-router.post("/login", (req, res) => {
-  res.json({ message: "Login endpoint - à implémenter" });
-});
-
-router.post("/logout", (req, res) => {
-  res.json({ message: "Logout endpoint - à implémenter" });
-});
+// Routes protégées (nécessitent un token)
+router.get("/profile", authMiddleware, getProfile);
 
 export default router;

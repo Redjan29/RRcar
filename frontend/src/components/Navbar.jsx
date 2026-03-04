@@ -1,11 +1,19 @@
 // src/components/Navbar.jsx
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import logo from "../assets/RRCAR.jpeg";
 import "./Navbar.css";
 import { useAppContext } from "../context/AppContext.jsx";
+import { useAuth } from "../context/AuthContext.jsx";
 
 export default function Navbar() {
   const { currency, setCurrency, language, setLanguage } = useAppContext();
+  const { isAuthenticated, user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
 
   return (
     <header className="navbar">
@@ -38,13 +46,27 @@ export default function Navbar() {
           <option value="USD">$ USD</option>
         </select>
 
-        {/* Connexion / Inscription */}
-        <Link to="/login" className="navbar-link">
-          {language === "fr" ? "Connexion" : "Log in"}
-        </Link>
-        <Link to="/signup" className="navbar-button">
-          {language === "fr" ? "Inscription" : "Sign up"}
-        </Link>
+        {/* Auth */}
+        {isAuthenticated ? (
+          <>
+            <span className="navbar-user">
+              {language === "fr" ? "Bonjour" : "Hello"},{" "}
+              {user?.firstName || "User"}
+            </span>
+            <button onClick={handleLogout} className="navbar-link navbar-logout">
+              {language === "fr" ? "Déconnexion" : "Logout"}
+            </button>
+          </>
+        ) : (
+          <>
+            <Link to="/login" className="navbar-link">
+              {language === "fr" ? "Connexion" : "Log in"}
+            </Link>
+            <Link to="/signup" className="navbar-button">
+              {language === "fr" ? "Inscription" : "Sign up"}
+            </Link>
+          </>
+        )}
       </div>
     </header>
   );
